@@ -1,0 +1,53 @@
+[+] DLL_PROCESS_ATTACH triggered!
+[+] Beep executed successfully.
+[+] Disabled thread library calls.
+[+] MainThread created successfully.
+[+] MainThread started
+[+] Found client.dll at: 00007FFA737E0000
+[-] Failed to find local player (Address is null)!
+[+] DLL_PROCESS_DETACH triggered!
+[+] DLL_PROCESS_ATTACH triggered!
+[+] Beep executed successfully.
+[+] Disabled thread library calls.
+[+] MainThread created successfully.
+[+] MainThread started
+[+] Found client.dll at: 00007FFA737E0000
+[+] Found localPlayerAddress at: 0x57177a7c800
+[+] Player Health: 100
+[+] DLL_PROCESS_DETACH triggered!
+[+] DLL_PROCESS_ATTACH triggered!
+[+] Beep executed successfully.
+[+] Disabled thread library calls.
+[+] MainThread created successfully.
+[+] MainThread started
+[+] Found client.dll at: 00007FFA737E0000
+[+] Found localPlayerAddress at: 0x57177a7c800
+[+] Player Health: 100
+[+] DLL_PROCESS_DETACH triggered!
+[+] DLL_PROCESS_ATTACH triggered!
+[+] Beep executed successfully.
+[+] Disabled thread library calls.
+[+] MainThread created successfully.
+[+] MainThread started
+[+] Found client.dll at: 00007FFA737E0000
+[+] Found localPlayerAddress at: 0x57177a7c800
+[+] Player Health: 100
+[+] DLL_PROCESS_DETACH triggered!
+[+] DLL_PROCESS_ATTACH triggered!
+[+] Beep executed successfully.
+[+] Disabled thread library calls.
+[+] MainThread created successfully.
+[+] MainThread started
+[+] Found client.dll at: 00007FFA737E0000
+[+] Found localPlayerAddress at: 0x57177a7c800
+[+] Player Health: 100
+[+] DLL_PROCESS_DETACH triggered!
+[+] DLL_PROCESS_ATTACH triggered!
+[+] Beep executed successfully.
+[+] Disabled thread library calls.
+[+] MainThread created successfully.
+[+] MainThread started
+[+] Found client.dll at: 00007FFA737E0000
+[+] Found localPlayerAddress at: 0x57177a7c800
+[+] Player Health: 100
+[+] DLL_PROCESS_DETACH triggered!
