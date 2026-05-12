@@ -97,12 +97,17 @@ void GUI::Render()
             ImGui::EndTabItem();
         }
 
-        if (ImGui::BeginTabItem("Visuals"))
-        {
-            ImGui::Spacing();
-            ImGui::Checkbox("Glow ESP", &bGlowESP);
-            ImGui::EndTabItem();
-        }
+        if (ImGui::BeginTabItem("Visuals")) {
+    ImGui::Spacing();
+    ImGui::Text("Box ESP");
+    ImGui::Separator();
+    ImGui::Spacing();
+    ImGui::Checkbox("Box ESP",    &bBoxESP);
+    ImGui::Checkbox("Health Bar", &bHealthBar);
+    ImGui::Spacing();
+    ImGui::Checkbox("Glow ESP",   &bGlowESP);
+    ImGui::EndTabItem();
+}
 
         if (ImGui::BeginTabItem("Misc"))
         {

@@ -1,4 +1,5 @@
 #include "hooks.h"
+#include "../features/esp.hpp"
 #include "gui.h"
 #include "../imgui/imgui.h"
 #include "../imgui/backends/imgui_impl_win32.h"
@@ -57,18 +58,16 @@ namespace Hooks
         if (GetAsyncKeyState(VK_INSERT) & 1)
             GUI::g_Open = !GUI::g_Open;
 
-        if (GUI::g_Open)
-        {
-            ImGui_ImplDX11_NewFrame();
-            ImGui_ImplWin32_NewFrame();
-            ImGui::NewFrame();
+        ImGui_ImplDX11_NewFrame();
+        ImGui_ImplWin32_NewFrame();
+        ImGui::NewFrame();
 
-            GUI::Render();
+        ESP::Render();
+        if (GUI::g_Open) GUI::Render();
 
-            ImGui::Render();
-            g_pd3dContext->OMSetRenderTargets(1, &g_mainRTV, nullptr);
-            ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-        }
+        ImGui::Render();
+        g_pd3dContext->OMSetRenderTargets(1, &g_mainRTV, nullptr);
+        ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
         return oPresent(pSwapChain, SyncInterval, Flags);
     }
@@ -123,7 +122,6 @@ namespace Hooks
             return false;
         }
 
-        // vtable index 8 = IDXGISwapChain::Present
         void** vtable = *reinterpret_cast<void***>(pDummySC);
         void*  pPresentTarget = vtable[8];
 
@@ -159,8 +157,8 @@ namespace Hooks
             g_bInitialized = false;
         }
 
-        if (g_mainRTV)    { g_mainRTV->Release();    g_mainRTV    = nullptr; }
-        if (g_pd3dContext) { g_pd3dContext->Release(); g_pd3dContext = nullptr; }
-        if (g_pd3dDevice)  { g_pd3dDevice->Release();  g_pd3dDevice  = nullptr; }
+        if (g_mainRTV)     { g_mainRTV->Release();     g_mainRTV     = nullptr; }
+        if (g_pd3dContext)  { g_pd3dContext->Release();  g_pd3dContext = nullptr; }
+        if (g_pd3dDevice)   { g_pd3dDevice->Release();   g_pd3dDevice  = nullptr; }
     }
 }

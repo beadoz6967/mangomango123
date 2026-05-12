@@ -9,6 +9,8 @@ namespace GUI
     inline bool  bTriggerbot = false;
     inline float fAimFOV     = 5.0f;
     inline float fAimSmooth  = 3.0f;
+    inline bool bBoxESP    = false;
+    inline bool bHealthBar = false;
 
     void ApplyStyle();
     void Render();
