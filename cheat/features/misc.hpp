@@ -1,6 +1,6 @@
 #pragma once
 
-class ImDrawList;
+struct ImDrawList;
 
 namespace Radar
 {

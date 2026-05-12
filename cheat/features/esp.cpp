@@ -145,7 +145,7 @@ void ESP::Render() {
         int   team = Rd<int>(pPawn + PawnOff::m_iTeamNum);
         ImU32 col  = (team == 2) ? IM_COL32(255, 75, 75, 230) : IM_COL32(75, 160, 255, 230);
 
-        bool  dormant    = Rd<uint8_t>(pPawn + NodeOff::m_bDormant) != 0;
+        bool  dormant    = Rd<uint8_t>(sceneNode + NodeOff::m_bDormant) != 0;
         float visibility = dormant ? 0.3f : 1.0f;
 
         if (GUI::bGlowESP)    Glow::RenderGlow      (dl, boxX, sHead.y, boxW, boxH, col, 0.9f);

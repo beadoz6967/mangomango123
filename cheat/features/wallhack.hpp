@@ -1,6 +1,6 @@
 #pragma once
 
-class ImDrawList;
+struct ImDrawList;
 
 namespace Wallhack {
     void RenderWallhack(ImDrawList* dl, float boxX, float boxY, float boxW, float boxH, 

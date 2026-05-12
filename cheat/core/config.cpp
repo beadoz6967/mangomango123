@@ -32,11 +32,11 @@ namespace Config {
               << "\nglow="             << GUI::bGlowESP        << "\nwallhack="   << GUI::bWallhackESP
               << "\nnames="            << GUI::bPlayerNames    << "\nweapons="    << GUI::bWeaponInfo
               << "\ndistance="         << GUI::bDistance       << "\narrows="     << GUI::bArrows
-              << "\n[Aimbot]\nenabled="<< GUI::bAimbot         << "\nfov="        << GUI::fAimFOV
+              << "\n[Aimbot]\nenabled="<< GUI::bAimbot         << "\naim_fov="    << GUI::fAimFOV
               << "\nsmooth="           << GUI::fAimSmooth      << "\nbone="       << GUI::iAimbotBone
               << "\nteamcheck="        << GUI::bAimbotTeamCheck<< "\n[Visuals]\nno_flash=" << GUI::bNoFlash
               << "\nno_smoke="         << GUI::bNoSmoke        << "\nsky_color="  << GUI::bSkyColor
-              << "\nfov="              << GUI::fFOVChanger
+              << "\nvis_fov="          << GUI::fFOVChanger
               << "\n[Movement]\nbhop=" << GUI::bBhop           << "\nstrafe="     << GUI::bStrafe
               << "\n[Misc]\nradar="    << GUI::bRadar          << "\nbomb_timer=" << GUI::bBombTimer
               << "\nspectator_list="   << GUI::bSpectatorList  << "\ntriggerbot=" << GUI::bTriggerbot << "\n";
@@ -83,14 +83,14 @@ namespace Config {
         GUI::bDistance        = getB("distance",       true);
         GUI::bArrows          = getB("arrows",         false);
         GUI::bAimbot          = getB("enabled",        false);
-        GUI::fAimFOV          = getF("fov",            5.0f);
+        GUI::fAimFOV          = getF("aim_fov",        5.0f);
         GUI::fAimSmooth       = getF("smooth",         3.0f);
         GUI::iAimbotBone      = getI("bone",           1);
         GUI::bAimbotTeamCheck = getB("teamcheck",      true);
         GUI::bNoFlash         = getB("no_flash",       false);
         GUI::bNoSmoke         = getB("no_smoke",       false);
         GUI::bSkyColor        = getB("sky_color",      false);
-        GUI::fFOVChanger      = getF("fov",            90.0f);
+        GUI::fFOVChanger      = getF("vis_fov",        90.0f);
         GUI::bBhop            = getB("bhop",           false);
         GUI::bStrafe          = getB("strafe",         false);
         GUI::bRadar           = getB("radar",          false);
