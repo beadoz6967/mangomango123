@@ -3,8 +3,7 @@
 #include <iostream>
 #include <sstream>
 
-const char* dllPath = "C:\\Users\\fofol\\Documents\\CHEATYcs2\\cs2cheat\\x64\\Release\\cheat.dll";
-
+const char* dllPath = "C:\\Users\\fofol\\source\\repos\\beadoz6967\\mangomango123\\x64\\Release\\cheat.dll";
 std::string GetLastErrorAsString()
 {
     DWORD errorMessageID = ::GetLastError();
