@@ -1,5 +1,9 @@
 #include "hooks.h"
 #include "../features/esp.hpp"
+#include "../features/aimbot.hpp"
+#include "../features/movement.hpp"
+#include "../features/visuals.hpp"
+#include "../features/misc.hpp"
 #include "gui.h"
 #include "../imgui/imgui.h"
 #include "../imgui/backends/imgui_impl_win32.h"
@@ -26,6 +30,16 @@ namespace Hooks
             g_pd3dDevice->CreateRenderTargetView(pBack, nullptr, &g_mainRTV);
             pBack->Release();
         }
+    }
+
+    HRESULT WINAPI hkResizeBuffers(IDXGISwapChain* pSwapChain, UINT BufferCount,
+        UINT Width, UINT Height, DXGI_FORMAT NewFormat, UINT SwapChainFlags)
+    {
+        if (g_mainRTV) { g_mainRTV->Release(); g_mainRTV = nullptr; }
+        HRESULT hr = oResizeBuffers(pSwapChain, BufferCount, Width, Height, NewFormat, SwapChainFlags);
+        if (SUCCEEDED(hr))
+            CreateRTV(pSwapChain);
+        return hr;
     }
 
     HRESULT WINAPI hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags)
@@ -55,6 +69,15 @@ namespace Hooks
             g_bInitialized = true;
         }
 
+        // Get current swap chain description for display size
+        DXGI_SWAP_CHAIN_DESC sd{};
+        if (SUCCEEDED(pSwapChain->GetDesc(&sd)))
+        {
+            ImGuiIO& io = ImGui::GetIO();
+            io.DisplaySize = ImVec2((float)sd.BufferDesc.Width, (float)sd.BufferDesc.Height);
+        }
+
+        // Handle INPUT
         if (GetAsyncKeyState(VK_INSERT) & 1)
             GUI::g_Open = !GUI::g_Open;
 
@@ -62,7 +85,55 @@ namespace Hooks
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
+        // Handle mouse input when menu is open
+        if (GUI::g_Open && g_Hwnd)
+        {
+            ImGuiIO& io = ImGui::GetIO();
+            io.MouseDrawCursor = true;
+
+            RECT windowRect{};
+            GetWindowRect(g_Hwnd, &windowRect);
+            ClipCursor(&windowRect);
+
+            POINT mousePos{};
+            GetCursorPos(&mousePos);
+            ScreenToClient(g_Hwnd, &mousePos);
+            io.MousePos = ImVec2((float)mousePos.x, (float)mousePos.y);
+
+            io.MouseDown[0] = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
+            io.MouseDown[1] = (GetAsyncKeyState(VK_RBUTTON) & 0x8000) != 0;
+            SetCursor(LoadCursorW(nullptr, IDC_ARROW));
+        }
+        else
+        {
+            ImGuiIO& io = ImGui::GetIO();
+            io.MouseDrawCursor = false;
+            ClipCursor(nullptr);
+            io.MouseDown[0] = false;
+            io.MouseDown[1] = false;
+        }
+
+        // Update all features every frame
+        Aimbot::Update();
+        Visuals::Update();
+        Movement::Update();
+        Misc::Update();
+
+        // Render overlays
         ESP::Render();
+
+        // Render misc radar
+        if (GUI::bRadar)
+        {
+            ImGui::SetNextWindowPos({ 20.f, 20.f });
+            ImGui::SetNextWindowSize({ 160.f, 160.f });
+            ImGui::Begin("##radar", nullptr, 
+                ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs | 
+                ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoBringToFrontOnFocus);
+            Radar::Render(ImGui::GetWindowDrawList(), 160.f, 160.f);
+            ImGui::End();
+        }
+
         if (GUI::g_Open) GUI::Render();
 
         ImGui::Render();
@@ -74,8 +145,16 @@ namespace Hooks
 
     LRESULT WINAPI hkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
-        if (GUI::g_Open && ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam))
-            return 1L;
+        // Always pass to ImGui handler if menu is open
+        if (GUI::g_Open)
+        {
+            ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
+            // Return 0 to prevent default window proc from handling menu interaction
+            if (uMsg == WM_LBUTTONDOWN || uMsg == WM_RBUTTONDOWN || 
+                uMsg == WM_LBUTTONUP || uMsg == WM_RBUTTONUP ||
+                uMsg == WM_MOUSEMOVE || uMsg == WM_MOUSEWHEEL)
+                return 0;
+        }
 
         return CallWindowProcW(oWndProc, hWnd, uMsg, wParam, lParam);
     }
@@ -137,7 +216,15 @@ namespace Hooks
                 reinterpret_cast<void**>(&oPresent)) != MH_OK)
             return false;
 
-        return MH_EnableHook(pPresentTarget) == MH_OK;
+        void* pResizeTarget = vtable[13];
+        if (MH_CreateHook(pResizeTarget, hkResizeBuffers,
+                reinterpret_cast<void**>(&oResizeBuffers)) != MH_OK)
+            return false;
+
+        if (MH_EnableHook(pPresentTarget) != MH_OK)
+            return false;
+
+        return MH_EnableHook(pResizeTarget) == MH_OK;
     }
 
     void Shutdown()

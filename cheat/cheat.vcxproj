@@ -143,7 +143,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="features\esp.hpp" /><ClInclude Include="framework.h" />
+    <ClInclude Include="features\esp.hpp" />
+    <ClInclude Include="features\glow.hpp" />
+    <ClInclude Include="features\wallhack.hpp" />
+    <ClInclude Include="framework.h" />
     <ClInclude Include="gui\gui.h" />
     <ClInclude Include="gui\hooks.h" />
     <ClInclude Include="pch.h" />
@@ -153,16 +156,39 @@
   </ItemGroup>
   <ItemGroup>
     <!-- Cheat source -->
+    <ClCompile Include="core\config.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="features\aimbot.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalIncludeDirectories>imgui;imgui\backends;minhook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ClCompile Include="features\misc.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalIncludeDirectories>imgui;imgui\backends;minhook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ClCompile Include="features\movement.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="features\visuals.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="features\glow.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalIncludeDirectories>imgui;imgui\backends;minhook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ClCompile Include="features\wallhack.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="gui\gui.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalIncludeDirectories>imgui;imgui\backends;minhook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
-
-      <ClCompile Include="features\esp.cpp">
-        <PrecompiledHeader>NotUsing</PrecompiledHeader>
-        <AdditionalIncludeDirectories>imgui;imgui\backends;%28AdditionalIncludeDirectories%29</AdditionalIncludeDirectories>
-      </ClCompile>
+    <ClCompile Include="features\esp.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalIncludeDirectories>imgui;imgui\backends;%28AdditionalIncludeDirectories%29</AdditionalIncludeDirectories>
+    </ClCompile>
     <ClCompile Include="gui\hooks.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalIncludeDirectories>imgui;imgui\backends;minhook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>

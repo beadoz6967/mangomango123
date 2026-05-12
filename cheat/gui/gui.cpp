@@ -76,48 +76,115 @@ void GUI::ApplyStyle()
 
 void GUI::Render()
 {
-    ImGui::SetNextWindowSize(ImVec2(420.f, 320.f), ImGuiCond_Always);
-    ImGui::Begin("cs2cheat", &g_Open,
-        ImGuiWindowFlags_NoResize |
+    ImGui::SetNextWindowSize(ImVec2(500.f, 600.f), ImGuiCond_FirstUseEver);
+    ImGui::Begin("LitWare CS2", &g_Open,
         ImGuiWindowFlags_NoCollapse |
         ImGuiWindowFlags_NoSavedSettings);
 
-    if (ImGui::BeginTabBar("##tabs"))
+    if (ImGui::BeginTabBar("##tabs", ImGuiTabBarFlags_None))
     {
-        if (ImGui::BeginTabItem("Legit"))
+        // ========== AIMBOT TAB ==========
+        if (ImGui::BeginTabItem("Aimbot"))
         {
             ImGui::Spacing();
-            ImGui::Text("Aimbot");
+            ImGui::Checkbox("Enable Aimbot", &bAimbot);
             ImGui::Separator();
-            ImGui::Spacing();
-            ImGui::SliderFloat("FOV",    &fAimFOV,    0.5f, 30.0f, "%.1f deg");
-            ImGui::SliderFloat("Smooth", &fAimSmooth, 1.0f, 20.0f, "%.1f");
-            ImGui::Spacing();
-            ImGui::Checkbox("Triggerbot", &bTriggerbot);
+
+            if (bAimbot)
+            {
+                ImGui::SliderFloat("FOV##aim", &fAimFOV, 0.5f, 50.0f, "%.1f deg");
+                ImGui::SliderFloat("Smoothing##aim", &fAimSmooth, 1.0f, 30.0f, "%.1f");
+
+                const char* bones[] = { "Body", "Head" };
+                ImGui::Combo("Target Bone", &iAimbotBone, bones, IM_ARRAYSIZE(bones));
+
+                ImGui::Checkbox("Team Check##aim", &bAimbotTeamCheck);
+                ImGui::Checkbox("Triggerbot##aim", &bTriggerbot);
+            }
+
             ImGui::EndTabItem();
         }
 
-        if (ImGui::BeginTabItem("Visuals")) {
-    ImGui::Spacing();
-    ImGui::Text("Box ESP");
-    ImGui::Separator();
-    ImGui::Spacing();
-    ImGui::Checkbox("Box ESP",    &bBoxESP);
-    ImGui::Checkbox("Health Bar", &bHealthBar);
-    ImGui::Spacing();
-    ImGui::Checkbox("Glow ESP",   &bGlowESP);
-    ImGui::EndTabItem();
-}
+        // ========== ESP TAB ==========
+        if (ImGui::BeginTabItem("ESP"))
+        {
+            ImGui::Spacing();
+            ImGui::Text("Rendering");
+            ImGui::Separator();
+            ImGui::Checkbox("Box ESP", &bBoxESP);
+            ImGui::Checkbox("Health Bar", &bHealthBar);
+            ImGui::Checkbox("Player Names", &bPlayerNames);
+            ImGui::Checkbox("Weapon Info", &bWeaponInfo);
+            ImGui::Checkbox("Distance", &bDistance);
+            ImGui::Checkbox("Offscreen Arrows", &bArrows);
 
+            ImGui::Spacing();
+            ImGui::Text("Effects");
+            ImGui::Separator();
+            ImGui::Checkbox("Glow ESP", &bGlowESP);
+            ImGui::Checkbox("Wallhack", &bWallhackESP);
+
+            ImGui::EndTabItem();
+        }
+
+        // ========== VISUALS TAB ==========
+        if (ImGui::BeginTabItem("Visuals"))
+        {
+            ImGui::Spacing();
+            ImGui::Text("Visual Enhancements");
+            ImGui::Separator();
+            ImGui::Checkbox("No Flash", &bNoFlash);
+            ImGui::Checkbox("No Smoke", &bNoSmoke);
+            ImGui::Checkbox("Custom Sky", &bSkyColor);
+
+            ImGui::Spacing();
+            ImGui::Text("Camera");
+            ImGui::Separator();
+            ImGui::SliderFloat("FOV", &fFOVChanger, 60.0f, 120.0f, "%.0f");
+
+            ImGui::EndTabItem();
+        }
+
+        // ========== MOVEMENT TAB ==========
+        if (ImGui::BeginTabItem("Movement"))
+        {
+            ImGui::Spacing();
+            ImGui::Text("Movement Assistance");
+            ImGui::Separator();
+            ImGui::Checkbox("Bunny Hop", &bBhop);
+            ImGui::Checkbox("Strafe Helper", &bStrafe);
+
+            ImGui::EndTabItem();
+        }
+
+        // ========== MISC TAB ==========
         if (ImGui::BeginTabItem("Misc"))
         {
             ImGui::Spacing();
-            ImGui::Checkbox("Bunnyhop", &bBhop);
+            ImGui::Text("Overlay");
+            ImGui::Separator();
+            ImGui::Checkbox("Radar", &bRadar);
+            ImGui::Checkbox("Bomb Timer", &bBombTimer);
+            ImGui::Checkbox("Spectator List", &bSpectatorList);
+
+            ImGui::Spacing();
+            ImGui::Text("Settings");
+            ImGui::Separator();
+            if (ImGui::Button("Save Config", ImVec2(-1, 0)))
+            {
+                // Config will be saved on unload
+            }
+            if (ImGui::Button("Reset to Defaults", ImVec2(-1, 0)))
+            {
+                // Reset will be called from config
+            }
+
             ImGui::Spacing();
             ImGui::Separator();
-            ImGui::Spacing();
             ImGui::TextDisabled("INSERT  - toggle menu");
             ImGui::TextDisabled("END     - unload cheat");
+            ImGui::TextDisabled("v1.0 - Powered by LitWare");
+
             ImGui::EndTabItem();
         }
 
