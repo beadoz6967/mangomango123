@@ -7,7 +7,8 @@
 
 using namespace cs2_dumper::offsets;
 
-constexpr ptrdiff_t m_fFlags = 0x3EC;
+constexpr ptrdiff_t m_pMovementServices = 0x6B8;  // CPlayer_MovementServices* on pawn
+constexpr ptrdiff_t m_bOnGround         = 0x11A4; // bool in CPlayer_MovementServices
 
 template<typename T>
 static T MovRd(uintptr_t addr) {
@@ -26,8 +27,8 @@ namespace Movement {
         const uintptr_t localPawn = MovRd<uintptr_t>(clientBase + client_dll::dwLocalPlayerPawn);
         if (!localPawn) return;
 
-        const uint32_t flags    = MovRd<uint32_t>(localPawn + m_fFlags);
-        const bool     onGround = (flags & 1) != 0;
+        const uintptr_t movSvc  = MovRd<uintptr_t>(localPawn + m_pMovementServices);
+        const bool      onGround = movSvc ? MovRd<bool>(movSvc + m_bOnGround) : false;
 
         if (GUI::bBhop && (GetAsyncKeyState(VK_SPACE) & 0x8000)) {
             // Fire a jump on the frame we land so the engine sees a fresh press

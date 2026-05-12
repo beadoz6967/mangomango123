@@ -23,15 +23,17 @@ struct Vector3 {
 struct VMatrix { float m[4][4]; };
 
 namespace PawnOff {
-    constexpr ptrdiff_t m_iHealth        = 0x334;
-    constexpr ptrdiff_t m_iTeamNum       = 0x3CB;
-    constexpr ptrdiff_t m_lifeState      = 0x338;
-    constexpr ptrdiff_t m_pGameSceneNode = 0x310;
-    constexpr ptrdiff_t m_iszPlayerName  = 0x600;
-    constexpr ptrdiff_t m_pClippingWeapon= 0x9C8;
+    constexpr ptrdiff_t m_iHealth        = 0x344;
+    constexpr ptrdiff_t m_iTeamNum       = 0x3E3;
+    constexpr ptrdiff_t m_lifeState      = 0x348;
+    constexpr ptrdiff_t m_pGameSceneNode = 0x200;
+    constexpr ptrdiff_t m_pClippingWeapon= 0x9C8; // stale — weapon reads fail gracefully via SEH
 }
-namespace CtrlOff  { constexpr ptrdiff_t m_hPlayerPawn = 0x7E4; }
-namespace NodeOff  { constexpr ptrdiff_t m_bDormant = 0x103; constexpr ptrdiff_t m_vRenderOrigin = 0x128; }
+namespace CtrlOff  {
+    constexpr ptrdiff_t m_hPlayerPawn    = 0x608;
+    constexpr ptrdiff_t m_iszPlayerName  = 0x640; // name lives on controller, not pawn
+}
+namespace NodeOff  { constexpr ptrdiff_t m_bDormant = 0x377; constexpr ptrdiff_t m_vRenderOrigin = 0x274; }
 namespace WeaponOff{ constexpr ptrdiff_t m_iClipAmmo = 0x330; constexpr ptrdiff_t m_iPrimaryReserveAmmoCount = 0x33C; }
 
 template<typename T>
@@ -62,8 +64,8 @@ static bool SafeCopyName(const char* src, char* dst, int max) {
     } __except(EXCEPTION_EXECUTE_HANDLER) { return false; }
 }
 
-static std::string GetPlayerName(uintptr_t pPawn) {
-    const char* ptr = Rd<const char*>(pPawn + PawnOff::m_iszPlayerName);
+static std::string GetPlayerName(uintptr_t controller) {
+    const char* ptr = Rd<const char*>(controller + CtrlOff::m_iszPlayerName);
     if (!ptr) return "Unknown";
     char buf[128]{};
     if (!SafeCopyName(ptr, buf, 127) || !buf[0]) return "Unknown";
@@ -163,7 +165,7 @@ void ESP::Render() {
         }
 
         if (GUI::bPlayerNames) {
-            std::string name = GetPlayerName(pPawn);
+            std::string name = GetPlayerName(controller);
             ImVec2 ts = ImGui::CalcTextSize(name.c_str());
             dl->AddText({ boxX + boxW * 0.5f - ts.x * 0.5f, sHead.y - 20.f }, col, name.c_str());
         }

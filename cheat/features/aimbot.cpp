@@ -19,13 +19,13 @@ static T AimRd(uintptr_t addr) {
 }
 
 namespace PawnOffA {
-    constexpr ptrdiff_t m_iHealth        = 0x334;
-    constexpr ptrdiff_t m_iTeamNum       = 0x3CB;
-    constexpr ptrdiff_t m_lifeState      = 0x338;
-    constexpr ptrdiff_t m_pGameSceneNode = 0x310;
-    constexpr ptrdiff_t m_vRenderOrigin  = 0x128;
+    constexpr ptrdiff_t m_iHealth        = 0x344;
+    constexpr ptrdiff_t m_iTeamNum       = 0x3E3;
+    constexpr ptrdiff_t m_lifeState      = 0x348;
+    constexpr ptrdiff_t m_pGameSceneNode = 0x200;
+    constexpr ptrdiff_t m_vRenderOrigin  = 0x274;
 }
-namespace CtrlOffA { constexpr ptrdiff_t m_hPlayerPawn = 0x7E4; }
+namespace CtrlOffA { constexpr ptrdiff_t m_hPlayerPawn = 0x608; }
 
 static float NormAngle(float a) {
     while (a >  180.f) a -= 360.f;
