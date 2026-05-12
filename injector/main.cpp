@@ -50,18 +50,16 @@ int GetDllBitness(const char* path)
 
     IMAGE_DOS_HEADER dosHeader{};
     DWORD bytesRead = 0;
-
-    (void)ReadFile(hFile, &dosHeader, sizeof(dosHeader), &bytesRead, nullptr);
+    ReadFile(hFile, &dosHeader, sizeof(dosHeader), &bytesRead, nullptr);
     if (dosHeader.e_magic != IMAGE_DOS_SIGNATURE) { CloseHandle(hFile); return 0; }
 
     SetFilePointer(hFile, dosHeader.e_lfanew, nullptr, FILE_BEGIN);
     DWORD ntSignature = 0;
-
-    (void)ReadFile(hFile, &ntSignature, sizeof(ntSignature), &bytesRead, nullptr);
+    ReadFile(hFile, &ntSignature, sizeof(ntSignature), &bytesRead, nullptr);
     if (ntSignature != IMAGE_NT_SIGNATURE) { CloseHandle(hFile); return 0; }
 
     IMAGE_FILE_HEADER fileHeader{};
-    (void)ReadFile(hFile, &fileHeader, sizeof(fileHeader), &bytesRead, nullptr);
+    ReadFile(hFile, &fileHeader, sizeof(fileHeader), &bytesRead, nullptr);
     CloseHandle(hFile);
 
     if (fileHeader.Machine == IMAGE_FILE_MACHINE_AMD64) return 64;
