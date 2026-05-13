@@ -1,16 +1,13 @@
-// features/visuals.cpp — no-flash implemented; others noted
+// features/visuals.cpp
 #include "../pch.h"
 #include "visuals.hpp"
 #include "../gui/gui.h"
 #include "../sdk/offsets.hpp"
+#include "../sdk/schemas.hpp"
 #include <Windows.h>
 
 using namespace cs2_dumper::offsets;
-
-constexpr ptrdiff_t m_flFlashMaxAlpha  = 0x13FC;
-constexpr ptrdiff_t m_flFlashDuration  = 0x1400;
-constexpr ptrdiff_t m_pCameraServices  = 0x14B8; // CPlayer_CameraServices* on pawn
-constexpr ptrdiff_t m_flFOVDesired     = 0x2A8;  // float in CPlayer_CameraServices
+using namespace schemas;
 
 template<typename T>
 static T VisRd(uintptr_t addr) {
@@ -34,14 +31,14 @@ namespace Visuals {
         if (!localPawn) return;
 
         if (GUI::bNoFlash) {
-            VisWr<float>(localPawn + m_flFlashMaxAlpha, 0.f);
-            VisWr<float>(localPawn + m_flFlashDuration, 0.f);
+            VisWr<float>(localPawn + pawn::m_flFlashMaxAlpha, 0.f);
+            VisWr<float>(localPawn + pawn::m_flFlashDuration, 0.f);
         }
 
         if (GUI::fFOVChanger != 90.f) {
-            const uintptr_t camSvc = VisRd<uintptr_t>(localPawn + m_pCameraServices);
+            const uintptr_t camSvc = VisRd<uintptr_t>(localPawn + pawn::m_pCameraServices);
             if (camSvc)
-                VisWr<float>(camSvc + m_flFOVDesired, GUI::fFOVChanger);
+                VisWr<float>(camSvc + camera::m_flFOVDesired, GUI::fFOVChanger);
         }
 
         // NO SMOKE: needs m_nSmokeEffect offset — stub until offset available

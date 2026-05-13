@@ -21,6 +21,8 @@ namespace Hooks
     static ID3D11DeviceContext*    g_pd3dContext  = nullptr;
     static ID3D11RenderTargetView* g_mainRTV      = nullptr;
     static bool                    g_bInitialized = false;
+    static LARGE_INTEGER           s_lastQPC      = {};
+    static LARGE_INTEGER           s_qpcFreq      = {};
 
     static void CreateRTV(IDXGISwapChain* pSwapChain)
     {
@@ -113,8 +115,17 @@ namespace Hooks
             io.MouseDown[1] = false;
         }
 
-        // Update all features every frame
-        Aimbot::Update();
+        // QPC deltaTime — microsecond resolution, correct at 300fps+
+        if (!s_qpcFreq.QuadPart) QueryPerformanceFrequency(&s_qpcFreq);
+        LARGE_INTEGER qpcNow;
+        QueryPerformanceCounter(&qpcNow);
+        float deltaTime = s_lastQPC.QuadPart
+            ? (float)(qpcNow.QuadPart - s_lastQPC.QuadPart) / (float)s_qpcFreq.QuadPart
+            : 1.f / 60.f;
+        if (deltaTime > 0.1f) deltaTime = 0.1f;
+        s_lastQPC = qpcNow;
+
+        Aimbot::Update(deltaTime);
         Visuals::Update();
         Movement::Update();
         Misc::Update();
