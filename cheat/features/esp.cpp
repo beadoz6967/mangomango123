@@ -34,6 +34,8 @@ static bool W2S(const Vec3& world, ImVec2& screen, const VMatrix& vm, float sw, 
     float inv = 1.0f / w;
     screen.x = (sw * 0.5f) + (x * inv * sw * 0.5f);
     screen.y = (sh * 0.5f) - (y * inv * sh * 0.5f);
+    if (screen.x < -100.f || screen.x > sw + 100.f || screen.y < -100.f || screen.y > sh + 100.f)
+        return false;
     return true;
 }
 
