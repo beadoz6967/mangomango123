@@ -39,14 +39,20 @@ static bool W2S(const Vec3& world, ImVec2& screen, const VMatrix& vm, float sw, 
     return true;
 }
 
+// SEH helper — no C++ objects allowed in __try scope
+static bool SafeCopyName(const char* src, char* dst, int max) {
+    __try {
+        for (int i = 0; i < max && src[i]; i++) dst[i] = src[i];
+        return true;
+    } __except(EXCEPTION_EXECUTE_HANDLER) { return false; }
+}
+
 // m_iszPlayerName at 0x640 is inline char[128] on CCSPlayerController — no pointer hop.
 static std::string GetPlayerName(uintptr_t ctrl) {
-    const char* src = reinterpret_cast<const char*>(ctrl + controller::m_iszPlayerName);
     char buf[128]{};
-    __try {
-        for (int i = 0; i < 127 && src[i]; i++) buf[i] = src[i];
-    } __except(EXCEPTION_EXECUTE_HANDLER) { return "Unknown"; }
-    return buf[0] ? std::string(buf) : "Unknown";
+    const char* src = reinterpret_cast<const char*>(ctrl + controller::m_iszPlayerName);
+    if (!SafeCopyName(src, buf, 127) || !buf[0]) return "Unknown";
+    return std::string(buf);
 }
 
 static void GetAmmoInfo(uintptr_t wpn, int& clip, int& reserve) {
