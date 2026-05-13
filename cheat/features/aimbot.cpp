@@ -119,6 +119,6 @@ namespace Aimbot {
         if (newAngles.x >  89.f) newAngles.x =  89.f;
         if (newAngles.x < -89.f) newAngles.x = -89.f;
 
-        *pAngles = newAngles;
+        if (pAngles) *pAngles = newAngles;
     }
 }

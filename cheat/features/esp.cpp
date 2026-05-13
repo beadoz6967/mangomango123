@@ -45,7 +45,7 @@ static T Rd(uintptr_t addr) {
     return result;
 }
 
-// FIXED: correct W2S — no double sw/2 offset
+// FIXED: correct W2S — no double sw/2 offset, with bounds checking
 static bool W2S(const Vector3& world, ImVec2& screen, const VMatrix& vm, float sw, float sh) {
     float w = vm.m[3][0]*world.x + vm.m[3][1]*world.y + vm.m[3][2]*world.z + vm.m[3][3];
     if (w < 0.01f) return false;
@@ -54,6 +54,11 @@ static bool W2S(const Vector3& world, ImVec2& screen, const VMatrix& vm, float s
     float inv = 1.0f / w;
     screen.x = (sw * 0.5f) + (x * inv * sw * 0.5f);
     screen.y = (sh * 0.5f) - (y * inv * sh * 0.5f);
+
+    // Ensure screen coordinates are within valid range
+    if (screen.x < -100.f || screen.x > sw + 100.f || screen.y < -100.f || screen.y > sh + 100.f)
+        return false;
+
     return true;
 }
 
