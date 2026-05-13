@@ -64,7 +64,7 @@ namespace Aimbot {
         for (int i = 1; i < 128; i++) {
             const uintptr_t chunk = AimRd<uintptr_t>(entList + 16 + 8 * ((i & 0x7FFF) >> 9));
             if (!chunk) continue;
-            const uintptr_t ctrl  = AimRd<uintptr_t>(chunk + 112 * (i & 0x1FF));
+            const uintptr_t ctrl  = AimRd<uintptr_t>(chunk + 120 * (i & 0x1FF));
             if (!ctrl) continue;
 
             const uint32_t  handle  = AimRd<uint32_t>(ctrl + controller::m_hPlayerPawn);
@@ -74,7 +74,7 @@ namespace Aimbot {
             const uintptr_t pChunk  = AimRd<uintptr_t>(entList + 16 + 8 * ((pawnIdx & 0x7FFF) >> 9));
             if (!pChunk) continue;
 
-            const uintptr_t pPawn = AimRd<uintptr_t>(pChunk + 112 * (pawnIdx & 0x1FF));
+            const uintptr_t pPawn = AimRd<uintptr_t>(pChunk + 120 * (pawnIdx & 0x1FF));
             if (!pPawn || pPawn == localPawn) continue;
             if (AimRd<uint8_t>(pPawn + pawn::m_lifeState) != 0) continue;
 

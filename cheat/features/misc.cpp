@@ -49,7 +49,7 @@ void Radar::Render(ImDrawList* dl, float screenWidth, float screenHeight)
     for (int i = 1; i < 128; i++) {
         const uintptr_t chunk = MiscRd<uintptr_t>(entList + 16 + 8 * ((i & 0x7FFF) >> 9));
         if (!chunk) continue;
-        const uintptr_t ctrl  = MiscRd<uintptr_t>(chunk + 112 * (i & 0x1FF));
+        const uintptr_t ctrl  = MiscRd<uintptr_t>(chunk + 120 * (i & 0x1FF));
         if (!ctrl) continue;
 
         const uint32_t handle = MiscRd<uint32_t>(ctrl + controller::m_hPlayerPawn);
@@ -59,7 +59,7 @@ void Radar::Render(ImDrawList* dl, float screenWidth, float screenHeight)
         const uintptr_t pChunk = MiscRd<uintptr_t>(entList + 16 + 8 * ((pawnIdx & 0x7FFF) >> 9));
         if (!pChunk) continue;
 
-        const uintptr_t pPawn = MiscRd<uintptr_t>(pChunk + 112 * (pawnIdx & 0x1FF));
+        const uintptr_t pPawn = MiscRd<uintptr_t>(pChunk + 120 * (pawnIdx & 0x1FF));
         if (!pPawn || pPawn == localPawn) continue;
         if (MiscRd<uint8_t>(pPawn + pawn::m_lifeState) != 0) continue;
 

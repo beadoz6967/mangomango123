@@ -107,7 +107,7 @@ static uintptr_t ResolveActiveWeapon(uintptr_t pPawn, uintptr_t entList) {
     const int       idx   = handle & 0x7FFF;
     const uintptr_t chunk = Rd<uintptr_t>(entList + 16 + 8 * ((idx & 0x7FFF) >> 9));
     if (!chunk) return 0;
-    return Rd<uintptr_t>(chunk + 112 * (idx & 0x1FF));
+    return Rd<uintptr_t>(chunk + 120 * (idx & 0x1FF));
 }
 
 static void DrawCornerBox(ImDrawList* dl, float x, float y, float w, float h,
@@ -205,7 +205,7 @@ void ESP::Render() {
     for (int i = 1; i < 128; i++) {
         const uintptr_t chunkPtr = Rd<uintptr_t>(entList + 16 + 8 * ((i & 0x7FFF) >> 9));
         if (!chunkPtr) continue;
-        const uintptr_t ctrl = Rd<uintptr_t>(chunkPtr + 112 * (i & 0x1FF));
+        const uintptr_t ctrl = Rd<uintptr_t>(chunkPtr + 120 * (i & 0x1FF));
         if (!ctrl) continue;
 
         const uint32_t  pawnHandle = Rd<uint32_t>(ctrl + controller::m_hPlayerPawn);
@@ -215,7 +215,7 @@ void ESP::Render() {
         const uintptr_t pawnChunk = Rd<uintptr_t>(entList + 16 + 8 * ((pawnIdx & 0x7FFF) >> 9));
         if (!pawnChunk) continue;
 
-        const uintptr_t pPawn = Rd<uintptr_t>(pawnChunk + 112 * (pawnIdx & 0x1FF));
+        const uintptr_t pPawn = Rd<uintptr_t>(pawnChunk + 120 * (pawnIdx & 0x1FF));
         if (!pPawn || pPawn == localPawn) continue;
         if (Rd<uint8_t>(pPawn + pawn::m_lifeState) != 0) continue;
 

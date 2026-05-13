@@ -26,8 +26,7 @@ namespace Movement {
         const uintptr_t localPawn = MovRd<uintptr_t>(clientBase + client_dll::dwLocalPlayerPawn);
         if (!localPawn) return;
 
-        const uintptr_t movSvc  = MovRd<uintptr_t>(localPawn + pawn::m_pMovementServices);
-        const bool      onGround = movSvc ? MovRd<bool>(movSvc + movement_svc::m_bOnGround) : false;
+        const bool onGround = (MovRd<uint32_t>(localPawn + pawn::m_fFlags) & 1) != 0;
 
         if (GUI::bBhop && (GetAsyncKeyState(VK_SPACE) & 0x8000)) {
             if (onGround && s_wasInAir) {
