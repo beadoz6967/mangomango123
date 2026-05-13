@@ -65,16 +65,26 @@ void GUI::Render() {
         }
 
         if (ImGui::BeginTabItem("ESP")) {
-            ImGui::Spacing(); ImGui::Text("Rendering"); ImGui::Separator();
-            ImGui::Checkbox("Box ESP",         &bBoxESP);
-            ImGui::Checkbox("Health Bar",      &bHealthBar);
-            ImGui::Checkbox("Player Names",    &bPlayerNames);
-            ImGui::Checkbox("Weapon Info",     &bWeaponInfo);
-            ImGui::Checkbox("Distance",        &bDistance);
-            ImGui::Checkbox("Offscreen Arrows",&bArrows);
+            ImGui::Spacing(); ImGui::Text("Boxes & Lines"); ImGui::Separator();
+            ImGui::Checkbox("Box ESP",           &bBoxESP);
+            if (bBoxESP)
+                ImGui::Checkbox("  Corner Box Style", &bCornerBox);
+            ImGui::Checkbox("Snaplines",         &bSnaplines);
+            ImGui::Spacing(); ImGui::Text("Health & Armor"); ImGui::Separator();
+            ImGui::Checkbox("Health Bar",        &bHealthBar);
+            if (bHealthBar)
+                ImGui::Checkbox("  Show HP Number",  &bHealthNumber);
+            ImGui::Checkbox("Armor Bar",         &bArmorBar);
+            ImGui::Spacing(); ImGui::Text("Info"); ImGui::Separator();
+            ImGui::Checkbox("Player Names",      &bPlayerNames);
+            ImGui::Checkbox("Weapon Name",       &bWeaponName);
+            ImGui::Checkbox("Ammo (clip/res)",   &bWeaponInfo);
+            ImGui::Checkbox("Flags [HE/KIT/C4]", &bEspFlags);
+            ImGui::Checkbox("Distance",          &bDistance);
+            ImGui::Checkbox("Offscreen Arrows",  &bArrows);
             ImGui::Spacing(); ImGui::Text("Effects"); ImGui::Separator();
-            ImGui::Checkbox("Glow ESP",  &bGlowESP);
-            ImGui::Checkbox("Wallhack",  &bWallhackESP);
+            ImGui::Checkbox("Glow ESP",          &bGlowESP);
+            ImGui::Checkbox("Wallhack",          &bWallhackESP);
             ImGui::EndTabItem();
         }
 

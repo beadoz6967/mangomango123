@@ -1,14 +1,13 @@
-// features/movement.cpp — bhop implemented
+// features/movement.cpp
 #include "../pch.h"
 #include "movement.hpp"
 #include "../gui/gui.h"
 #include "../sdk/offsets.hpp"
+#include "../sdk/schemas.hpp"
 #include <Windows.h>
 
 using namespace cs2_dumper::offsets;
-
-constexpr ptrdiff_t m_pMovementServices = 0x6B8;  // CPlayer_MovementServices* on pawn
-constexpr ptrdiff_t m_bOnGround         = 0x11A4; // bool in CPlayer_MovementServices
+using namespace schemas;
 
 template<typename T>
 static T MovRd(uintptr_t addr) {
@@ -27,26 +26,29 @@ namespace Movement {
         const uintptr_t localPawn = MovRd<uintptr_t>(clientBase + client_dll::dwLocalPlayerPawn);
         if (!localPawn) return;
 
-        const uintptr_t movSvc  = MovRd<uintptr_t>(localPawn + m_pMovementServices);
-        const bool      onGround = movSvc ? MovRd<bool>(movSvc + m_bOnGround) : false;
+        const uintptr_t movSvc  = MovRd<uintptr_t>(localPawn + pawn::m_pMovementServices);
+        const bool      onGround = movSvc ? MovRd<bool>(movSvc + movement_svc::m_bOnGround) : false;
 
         if (GUI::bBhop && (GetAsyncKeyState(VK_SPACE) & 0x8000)) {
-            // Fire a jump on the frame we land so the engine sees a fresh press
             if (onGround && s_wasInAir) {
                 keybd_event(VK_SPACE, 0, 0, 0);
                 keybd_event(VK_SPACE, 0, KEYEVENTF_KEYUP, 0);
             }
         }
 
-        // Update state every frame regardless of SPACE, so it stays accurate
         s_wasInAir = !onGround;
 
+        // Rate-limited: at most one A/D cycle per 15ms (was firing every Present call ~300/s)
         if (GUI::bStrafe && !onGround) {
-            // Alternate A/D each frame while airborne — no Sleep in the render thread
-            static bool side = false;
-            side = !side;
-            keybd_event(side ? 'A' : 'D', 0, 0, 0);
-            keybd_event(side ? 'A' : 'D', 0, KEYEVENTF_KEYUP, 0);
+            static DWORD s_lastStrafe = 0;
+            DWORD now = GetTickCount();
+            if ((now - s_lastStrafe) >= 15) {
+                static bool side = false;
+                side = !side;
+                keybd_event(side ? 'A' : 'D', 0, 0, 0);
+                keybd_event(side ? 'A' : 'D', 0, KEYEVENTF_KEYUP, 0);
+                s_lastStrafe = now;
+            }
         }
     }
 }

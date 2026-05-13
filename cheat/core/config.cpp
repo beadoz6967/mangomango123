@@ -28,10 +28,13 @@ namespace Config {
         try {
             std::ofstream f(g_ConfigPath);
             if (!f.is_open()) return false;
-            f << "[ESP]\nbox="         << GUI::bBoxESP        << "\nhealth="     << GUI::bHealthBar
-              << "\nglow="             << GUI::bGlowESP        << "\nwallhack="   << GUI::bWallhackESP
-              << "\nnames="            << GUI::bPlayerNames    << "\nweapons="    << GUI::bWeaponInfo
-              << "\ndistance="         << GUI::bDistance       << "\narrows="     << GUI::bArrows
+            f << "[ESP]\nbox="          << GUI::bBoxESP        << "\ncorner_box="   << GUI::bCornerBox
+              << "\nsnaplines="         << GUI::bSnaplines      << "\nhealth="       << GUI::bHealthBar
+              << "\nhealth_number="     << GUI::bHealthNumber   << "\narmor_bar="    << GUI::bArmorBar
+              << "\nglow="              << GUI::bGlowESP        << "\nwallhack="     << GUI::bWallhackESP
+              << "\nnames="             << GUI::bPlayerNames    << "\nweapon_name="  << GUI::bWeaponName
+              << "\nweapons="           << GUI::bWeaponInfo     << "\nesp_flags="    << GUI::bEspFlags
+              << "\ndistance="          << GUI::bDistance       << "\narrows="       << GUI::bArrows
               << "\n[Aimbot]\nenabled="<< GUI::bAimbot         << "\naim_fov="    << GUI::fAimFOV
               << "\nsmooth="           << GUI::fAimSmooth      << "\nbone="       << GUI::iAimbotBone
               << "\nteamcheck="        << GUI::bAimbotTeamCheck<< "\n[Visuals]\nno_flash=" << GUI::bNoFlash
@@ -82,6 +85,12 @@ namespace Config {
         GUI::bWeaponInfo      = getB("weapons",        true);
         GUI::bDistance        = getB("distance",       true);
         GUI::bArrows          = getB("arrows",         false);
+        GUI::bCornerBox       = getB("corner_box",     false);
+        GUI::bSnaplines       = getB("snaplines",      false);
+        GUI::bHealthNumber    = getB("health_number",  false);
+        GUI::bArmorBar        = getB("armor_bar",      false);
+        GUI::bWeaponName      = getB("weapon_name",    true);
+        GUI::bEspFlags        = getB("esp_flags",      true);
         GUI::bAimbot          = getB("enabled",        false);
         GUI::fAimFOV          = getF("aim_fov",        5.0f);
         GUI::fAimSmooth       = getF("smooth",         3.0f);
@@ -102,8 +111,10 @@ namespace Config {
     }
 
     void ResetDefaults() {
-        GUI::bBoxESP = true; GUI::bHealthBar = true; GUI::bGlowESP = false;
-        GUI::bWallhackESP = false; GUI::bPlayerNames = true; GUI::bWeaponInfo = true;
+        GUI::bBoxESP = true; GUI::bCornerBox = false; GUI::bSnaplines = false;
+        GUI::bHealthBar = true; GUI::bHealthNumber = false; GUI::bArmorBar = false;
+        GUI::bGlowESP = false; GUI::bWallhackESP = false; GUI::bPlayerNames = true;
+        GUI::bWeaponName = true; GUI::bWeaponInfo = true; GUI::bEspFlags = true;
         GUI::bDistance = true; GUI::bArrows = false; GUI::bAimbot = false;
         GUI::fAimFOV = 5.f; GUI::fAimSmooth = 3.f; GUI::iAimbotBone = 1;
         GUI::bAimbotTeamCheck = true; GUI::bNoFlash = false; GUI::bNoSmoke = false;

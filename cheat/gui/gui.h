@@ -6,11 +6,17 @@ namespace GUI
 
     // ESP
     inline bool  bBoxESP           = true;
+    inline bool  bCornerBox        = false;   // true = L-corners only, false = full rect
+    inline bool  bSnaplines        = false;
     inline bool  bHealthBar        = true;
+    inline bool  bHealthNumber     = false;   // show HP value on health bar
+    inline bool  bArmorBar         = false;   // blue bar, right side of box
     inline bool  bGlowESP          = false;
     inline bool  bWallhackESP      = false;
     inline bool  bPlayerNames      = true;
-    inline bool  bWeaponInfo       = true;
+    inline bool  bWeaponName       = true;    // weapon name string below box
+    inline bool  bWeaponInfo       = true;    // clip/reserve numbers
+    inline bool  bEspFlags         = true;    // [HE][KIT][C4] flags
     inline bool  bDistance         = true;
     inline bool  bArrows           = false;
 
