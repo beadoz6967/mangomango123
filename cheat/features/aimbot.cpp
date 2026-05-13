@@ -1,14 +1,15 @@
-// features/aimbot.cpp — basic head aimbot with FOV check + smoothing
+// features/aimbot.cpp
 #include "../pch.h"
 #include "aimbot.hpp"
 #include "../gui/gui.h"
 #include "../sdk/offsets.hpp"
+#include "../sdk/schemas.hpp"
+#include "../sdk/math.hpp"
 #include <Windows.h>
 #include <cmath>
 
 using namespace cs2_dumper::offsets;
-
-struct Vec3 { float x, y, z; Vec3 operator-(const Vec3& o) const { return {x-o.x, y-o.y, z-o.z}; } };
+using namespace schemas;
 
 template<typename T>
 static T AimRd(uintptr_t addr) {
@@ -17,15 +18,6 @@ static T AimRd(uintptr_t addr) {
     __try { r = *reinterpret_cast<T*>(addr); } __except(EXCEPTION_EXECUTE_HANDLER) { return T{}; }
     return r;
 }
-
-namespace PawnOffA {
-    constexpr ptrdiff_t m_iHealth        = 0x344;
-    constexpr ptrdiff_t m_iTeamNum       = 0x3E3;
-    constexpr ptrdiff_t m_lifeState      = 0x348;
-    constexpr ptrdiff_t m_pGameSceneNode = 0x200;
-    constexpr ptrdiff_t m_vRenderOrigin  = 0x274;
-}
-namespace CtrlOffA { constexpr ptrdiff_t m_hPlayerPawn = 0x608; }
 
 static float NormAngle(float a) {
     while (a >  180.f) a -= 360.f;
@@ -41,7 +33,7 @@ static Vec3 CalcAngle(Vec3 src, Vec3 dst) {
 }
 
 namespace Aimbot {
-    void Update() {
+    void Update(float deltaTime) {
         if (!GUI::bAimbot) return;
         if (!(GetAsyncKeyState(VK_RBUTTON) & 0x8000)) return;
 
@@ -54,15 +46,15 @@ namespace Aimbot {
         const uintptr_t entList = AimRd<uintptr_t>(clientBase + client_dll::dwEntityList);
         if (!entList) return;
 
-        const uintptr_t localNode = AimRd<uintptr_t>(localPawn + PawnOffA::m_pGameSceneNode);
+        const uintptr_t localNode = AimRd<uintptr_t>(localPawn + pawn::m_pGameSceneNode);
         if (!localNode) return;
-        Vec3 localFeet = AimRd<Vec3>(localNode + PawnOffA::m_vRenderOrigin);
+        Vec3 localFeet = AimRd<Vec3>(localNode + node::m_vRenderOrigin);
         Vec3 localEyes = { localFeet.x, localFeet.y, localFeet.z + 64.f };
 
         auto* pAngles       = reinterpret_cast<Vec3*>(clientBase + client_dll::dwViewAngles);
         Vec3  currentAngles = AimRd<Vec3>(reinterpret_cast<uintptr_t>(pAngles));
 
-        int localTeam = AimRd<int>(localPawn + PawnOffA::m_iTeamNum);
+        int localTeam = AimRd<int>(localPawn + pawn::m_iTeamNum);
 
         uintptr_t bestTarget = 0;
         float     bestFov    = GUI::fAimFOV;
@@ -74,7 +66,7 @@ namespace Aimbot {
             const uintptr_t ctrl  = AimRd<uintptr_t>(chunk + 112 * (i & 0x1FF));
             if (!ctrl) continue;
 
-            const uint32_t  handle  = AimRd<uint32_t>(ctrl + CtrlOffA::m_hPlayerPawn);
+            const uint32_t  handle  = AimRd<uint32_t>(ctrl + controller::m_hPlayerPawn);
             if (!handle || handle == 0xFFFFFFFF) continue;
 
             const int       pawnIdx = handle & 0x7FFF;
@@ -83,18 +75,18 @@ namespace Aimbot {
 
             const uintptr_t pPawn = AimRd<uintptr_t>(pChunk + 112 * (pawnIdx & 0x1FF));
             if (!pPawn || pPawn == localPawn) continue;
-            if (AimRd<uint8_t>(pPawn + PawnOffA::m_lifeState) != 0) continue;
+            if (AimRd<uint8_t>(pPawn + pawn::m_lifeState) != 0) continue;
 
-            const int hp = AimRd<int>(pPawn + PawnOffA::m_iHealth);
+            const int hp = AimRd<int>(pPawn + pawn::m_iHealth);
             if (hp <= 0 || hp > 100) continue;
 
-            if (GUI::bAimbotTeamCheck && AimRd<int>(pPawn + PawnOffA::m_iTeamNum) == localTeam)
+            if (GUI::bAimbotTeamCheck && AimRd<int>(pPawn + pawn::m_iTeamNum) == localTeam)
                 continue;
 
-            const uintptr_t node = AimRd<uintptr_t>(pPawn + PawnOffA::m_pGameSceneNode);
-            if (!node) continue;
+            const uintptr_t nd = AimRd<uintptr_t>(pPawn + pawn::m_pGameSceneNode);
+            if (!nd) continue;
 
-            Vec3 feet   = AimRd<Vec3>(node + PawnOffA::m_vRenderOrigin);
+            Vec3 feet   = AimRd<Vec3>(nd + node::m_vRenderOrigin);
             Vec3 target = feet;
             target.z   += (GUI::iAimbotBone == 1) ? 72.f : 48.f;
 
@@ -112,13 +104,19 @@ namespace Aimbot {
 
         if (!bestTarget) return;
 
-        Vec3 newAngles = currentAngles;
-        newAngles.x += NormAngle(bestAngle.x - currentAngles.x) / GUI::fAimSmooth;
-        newAngles.y += NormAngle(bestAngle.y - currentAngles.y) / GUI::fAimSmooth;
+        // Frame-rate-independent lerp via QPC deltaTime.
+        // At 60fps (dt=1/60): alpha = 1/smooth. At 300fps (dt=1/300): alpha = 1/(smooth*5) — same feel.
+        float smooth = std::max(1.f, GUI::fAimSmooth);
+        float alpha  = std::min(1.f, deltaTime * 60.f / smooth);
+
+        Vec3 newAngles;
+        newAngles.x = currentAngles.x + NormAngle(bestAngle.x - currentAngles.x) * alpha;
+        newAngles.y = currentAngles.y + NormAngle(bestAngle.y - currentAngles.y) * alpha;
+        newAngles.z = 0.f;
 
         if (newAngles.x >  89.f) newAngles.x =  89.f;
         if (newAngles.x < -89.f) newAngles.x = -89.f;
 
-        if (pAngles) *pAngles = newAngles;
+        __try { *pAngles = newAngles; } __except(EXCEPTION_EXECUTE_HANDLER) {}
     }
 }

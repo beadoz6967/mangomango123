@@ -1,8 +1,10 @@
-// features/esp.cpp — fixed W2S, fixed distance, fixed offscreen arrows
+// features/esp.cpp
 #include "../pch.h"
 #include "esp.hpp"
 #include "../gui/gui.h"
 #include "../sdk/offsets.hpp"
+#include "../sdk/schemas.hpp"
+#include "../sdk/math.hpp"
 #include "../imgui/imgui.h"
 #include "wallhack.hpp"
 #include "glow.hpp"
@@ -11,30 +13,9 @@
 #include <string>
 
 using namespace cs2_dumper::offsets;
-
-struct Vector3 {
-    float x, y, z;
-    Vector3 operator+(const Vector3& o) const { return { x+o.x, y+o.y, z+o.z }; }
-    Vector3 operator-(const Vector3& o) const { return { x-o.x, y-o.y, z-o.z }; }
-    Vector3 operator*(float s)          const { return { x*s, y*s, z*s }; }
-    float Length() const { return std::sqrt(x*x + y*y + z*z); }
-};
+using namespace schemas;
 
 struct VMatrix { float m[4][4]; };
-
-namespace PawnOff {
-    constexpr ptrdiff_t m_iHealth        = 0x344;
-    constexpr ptrdiff_t m_iTeamNum       = 0x3E3;
-    constexpr ptrdiff_t m_lifeState      = 0x348;
-    constexpr ptrdiff_t m_pGameSceneNode = 0x200;
-    constexpr ptrdiff_t m_pClippingWeapon= 0x9C8; // stale — weapon reads fail gracefully via SEH
-}
-namespace CtrlOff  {
-    constexpr ptrdiff_t m_hPlayerPawn    = 0x608;
-    constexpr ptrdiff_t m_iszPlayerName  = 0x640; // name lives on controller, not pawn
-}
-namespace NodeOff  { constexpr ptrdiff_t m_bDormant = 0x377; constexpr ptrdiff_t m_vRenderOrigin = 0x274; }
-namespace WeaponOff{ constexpr ptrdiff_t m_iClipAmmo = 0x330; constexpr ptrdiff_t m_iPrimaryReserveAmmoCount = 0x33C; }
 
 template<typename T>
 static T Rd(uintptr_t addr) {
@@ -45,8 +26,7 @@ static T Rd(uintptr_t addr) {
     return result;
 }
 
-// FIXED: correct W2S — no double sw/2 offset, with bounds checking
-static bool W2S(const Vector3& world, ImVec2& screen, const VMatrix& vm, float sw, float sh) {
+static bool W2S(const Vec3& world, ImVec2& screen, const VMatrix& vm, float sw, float sh) {
     float w = vm.m[3][0]*world.x + vm.m[3][1]*world.y + vm.m[3][2]*world.z + vm.m[3][3];
     if (w < 0.01f) return false;
     float x = vm.m[0][0]*world.x + vm.m[0][1]*world.y + vm.m[0][2]*world.z + vm.m[0][3];
@@ -54,33 +34,25 @@ static bool W2S(const Vector3& world, ImVec2& screen, const VMatrix& vm, float s
     float inv = 1.0f / w;
     screen.x = (sw * 0.5f) + (x * inv * sw * 0.5f);
     screen.y = (sh * 0.5f) - (y * inv * sh * 0.5f);
-
-    // Ensure screen coordinates are within valid range
     if (screen.x < -100.f || screen.x > sw + 100.f || screen.y < -100.f || screen.y > sh + 100.f)
         return false;
-
     return true;
 }
 
-static bool SafeCopyName(const char* src, char* dst, int max) {
-    __try {
-        for (int i = 0; i < max && src[i]; i++) dst[i] = src[i];
-        return true;
-    } __except(EXCEPTION_EXECUTE_HANDLER) { return false; }
-}
-
-static std::string GetPlayerName(uintptr_t controller) {
-    const char* ptr = Rd<const char*>(controller + CtrlOff::m_iszPlayerName);
-    if (!ptr) return "Unknown";
+// m_iszPlayerName at 0x640 is inline char[128] on CCSPlayerController — no pointer hop.
+static std::string GetPlayerName(uintptr_t ctrl) {
+    const char* src = reinterpret_cast<const char*>(ctrl + controller::m_iszPlayerName);
     char buf[128]{};
-    if (!SafeCopyName(ptr, buf, 127) || !buf[0]) return "Unknown";
-    return buf;
+    __try {
+        for (int i = 0; i < 127 && src[i]; i++) buf[i] = src[i];
+    } __except(EXCEPTION_EXECUTE_HANDLER) { return "Unknown"; }
+    return buf[0] ? std::string(buf) : "Unknown";
 }
 
-static void GetAmmoInfo(uintptr_t weapon, int& clip, int& reserve) {
-    if (!weapon) return;
-    clip    = Rd<int>(weapon + WeaponOff::m_iClipAmmo);
-    reserve = Rd<int>(weapon + WeaponOff::m_iPrimaryReserveAmmoCount);
+static void GetAmmoInfo(uintptr_t wpn, int& clip, int& reserve) {
+    if (!wpn) return;
+    clip    = Rd<int>(wpn + weapon::m_iClipAmmo);
+    reserve = Rd<int>(wpn + weapon::m_iPrimaryReserveAmmoCount);
 }
 
 void ESP::Render() {
@@ -108,37 +80,39 @@ void ESP::Render() {
 
     if (!entList || !localPawn) { ImGui::End(); return; }
 
-    // FIXED: follow scene node pointer to get local position
-    const uintptr_t localNode = Rd<uintptr_t>(localPawn + PawnOff::m_pGameSceneNode);
-    const Vector3   localPos  = localNode ? Rd<Vector3>(localNode + NodeOff::m_vRenderOrigin) : Vector3{};
+    const uintptr_t localNode = Rd<uintptr_t>(localPawn + pawn::m_pGameSceneNode);
+    const Vec3      localPos  = localNode ? Rd<Vec3>(localNode + node::m_vRenderOrigin) : Vec3{};
 
-    int pawnsDrawn = 0;
+    // One-shot weapon stale warning — fires once per session after 5 consecutive bad frames.
+    static int  s_badWeaponFrames = 0;
+    static bool s_weaponWarned    = false;
+    bool        anyBadWeaponRead  = false;
 
     for (int i = 1; i < 128; i++) {
-        const uintptr_t chunkPtr   = Rd<uintptr_t>(entList + 16 + 8 * ((i & 0x7FFF) >> 9));
+        const uintptr_t chunkPtr = Rd<uintptr_t>(entList + 16 + 8 * ((i & 0x7FFF) >> 9));
         if (!chunkPtr) continue;
-        const uintptr_t controller = Rd<uintptr_t>(chunkPtr + 112 * (i & 0x1FF));
-        if (!controller) continue;
+        const uintptr_t ctrl = Rd<uintptr_t>(chunkPtr + 112 * (i & 0x1FF));
+        if (!ctrl) continue;
 
-        const uint32_t  pawnHandle = Rd<uint32_t>(controller + CtrlOff::m_hPlayerPawn);
+        const uint32_t  pawnHandle = Rd<uint32_t>(ctrl + controller::m_hPlayerPawn);
         if (!pawnHandle || pawnHandle == 0xFFFFFFFF) continue;
 
-        const int       pawnIdx    = pawnHandle & 0x7FFF;
-        const uintptr_t pawnChunk  = Rd<uintptr_t>(entList + 16 + 8 * ((pawnIdx & 0x7FFF) >> 9));
+        const int       pawnIdx   = pawnHandle & 0x7FFF;
+        const uintptr_t pawnChunk = Rd<uintptr_t>(entList + 16 + 8 * ((pawnIdx & 0x7FFF) >> 9));
         if (!pawnChunk) continue;
 
         const uintptr_t pPawn = Rd<uintptr_t>(pawnChunk + 112 * (pawnIdx & 0x1FF));
         if (!pPawn || pPawn == localPawn) continue;
-        if (Rd<uint8_t>(pPawn + PawnOff::m_lifeState) != 0) continue;
+        if (Rd<uint8_t>(pPawn + pawn::m_lifeState) != 0) continue;
 
-        int hp = Rd<int>(pPawn + PawnOff::m_iHealth);
+        int hp = Rd<int>(pPawn + pawn::m_iHealth);
         if (hp <= 0 || hp > 100) continue;
 
-        const uintptr_t sceneNode = Rd<uintptr_t>(pPawn + PawnOff::m_pGameSceneNode);
+        const uintptr_t sceneNode = Rd<uintptr_t>(pPawn + pawn::m_pGameSceneNode);
         if (!sceneNode) continue;
 
-        Vector3 feet = Rd<Vector3>(sceneNode + NodeOff::m_vRenderOrigin);
-        Vector3 head = feet + Vector3{ 0.f, 0.f, 72.f };
+        Vec3 feet = Rd<Vec3>(sceneNode + node::m_vRenderOrigin);
+        Vec3 head = feet + Vec3{ 0.f, 0.f, 72.f };
 
         ImVec2 sFeet, sHead;
         if (!W2S(feet, sFeet, vm, sw, sh) || !W2S(head, sHead, vm, sw, sh)) continue;
@@ -149,14 +123,14 @@ void ESP::Render() {
         float boxW = boxH * 0.45f;
         float boxX = sHead.x - (boxW * 0.5f);
 
-        int   team = Rd<int>(pPawn + PawnOff::m_iTeamNum);
+        int   team = Rd<int>(pPawn + pawn::m_iTeamNum);
         ImU32 col  = (team == 2) ? IM_COL32(255, 75, 75, 230) : IM_COL32(75, 160, 255, 230);
 
-        bool  dormant    = Rd<uint8_t>(sceneNode + NodeOff::m_bDormant) != 0;
+        bool  dormant    = Rd<uint8_t>(sceneNode + node::m_bDormant) != 0;
         float visibility = dormant ? 0.3f : 1.0f;
 
-        if (GUI::bGlowESP)    Glow::RenderGlow      (dl, boxX, sHead.y, boxW, boxH, col, 0.9f);
-        if (GUI::bWallhackESP)Wallhack::RenderWallhack(dl, boxX, sHead.y, boxW, boxH, col, visibility, 0.9f);
+        if (GUI::bGlowESP)     Glow::RenderGlow(dl, boxX, sHead.y, boxW, boxH, col, 0.9f);
+        if (GUI::bWallhackESP) Wallhack::RenderWallhack(dl, boxX, sHead.y, boxW, boxH, col, visibility, 0.9f);
 
         if (GUI::bBoxESP) {
             dl->AddRect({ boxX,   sHead.y   }, { boxX + boxW,     sFeet.y     }, col,            0.f, 0, 1.2f);
@@ -170,16 +144,20 @@ void ESP::Render() {
         }
 
         if (GUI::bPlayerNames) {
-            std::string name = GetPlayerName(controller);
+            std::string name = GetPlayerName(ctrl);
             ImVec2 ts = ImGui::CalcTextSize(name.c_str());
             dl->AddText({ boxX + boxW * 0.5f - ts.x * 0.5f, sHead.y - 20.f }, col, name.c_str());
         }
 
         if (GUI::bWeaponInfo) {
-            uintptr_t weapon = Rd<uintptr_t>(pPawn + PawnOff::m_pClippingWeapon);
-            if (weapon) {
+            uintptr_t wpn = Rd<uintptr_t>(pPawn + pawn::m_pClippingWeapon);
+            if (wpn) {
                 int clip = 0, reserve = 0;
-                GetAmmoInfo(weapon, clip, reserve);
+                GetAmmoInfo(wpn, clip, reserve);
+
+                if (!s_weaponWarned && clip == 0 && reserve == 0)
+                    anyBadWeaponRead = true;
+
                 std::string ammo = std::to_string(clip) + "/" + std::to_string(reserve);
                 ImVec2 ts = ImGui::CalcTextSize(ammo.c_str());
                 dl->AddText({ boxX + boxW * 0.5f - ts.x * 0.5f, sFeet.y + 5.f }, col, ammo.c_str());
@@ -187,13 +165,11 @@ void ESP::Render() {
         }
 
         if (GUI::bDistance) {
-            // FIXED: was reading m_pGameSceneNode offset as Vector3 directly — now follows pointer
             float dist = (feet - localPos).Length() / 39.37f;
             std::string ds = std::to_string((int)dist) + "m";
             dl->AddText({ boxX + boxW + 5.f, sHead.y }, col, ds.c_str());
         }
 
-        // FIXED: only draw offscreen arrow when player is actually off-screen
         if (GUI::bArrows) {
             bool onScreen = (sHead.x >= 0 && sHead.x <= sw && sHead.y >= 0 && sHead.y <= sh);
             if (!onScreen) {
@@ -214,11 +190,16 @@ void ESP::Render() {
                 }
             }
         }
-
-        pawnsDrawn++;
     }
 
-    ImGui::SetCursorPos({ 20.f, 20.f });
-    ImGui::TextColored(ImVec4(0, 1, 1, 1), "Pawns Rendered: %d", pawnsDrawn);
+    if (!s_weaponWarned && GUI::bWeaponInfo) {
+        if (anyBadWeaponRead) s_badWeaponFrames++;
+        else                  s_badWeaponFrames = 0;
+        if (s_badWeaponFrames >= 5) {
+            OutputDebugStringA("[mangomango123] m_pClippingWeapon may be stale");
+            s_weaponWarned = true;
+        }
+    }
+
     ImGui::End();
 }

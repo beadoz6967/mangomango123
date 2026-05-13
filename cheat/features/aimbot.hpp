@@ -2,5 +2,5 @@
 
 namespace Aimbot
 {
-    void Update();
+    void Update(float deltaTime);
 }
