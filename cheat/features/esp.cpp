@@ -130,7 +130,7 @@ static void DrawHealthBar(ImDrawList* dl, float boxX, float top, float boxH,
 {
     float barX = boxX - 7.f;
     float bot  = top + boxH;
-    float frac = std::max(0.f, std::min(1.f, hp / 100.f));
+    float frac = (std::max)(0.f, (std::min)(1.f, hp / 100.f));
     float fillTop = bot - frac * boxH;
 
     dl->AddRectFilled({barX, top}, {barX + 4.f, bot}, IM_COL32(0,0,0,180));
@@ -162,7 +162,7 @@ static void DrawHealthBar(ImDrawList* dl, float boxX, float top, float boxH,
 static void DrawArmorBar(ImDrawList* dl, float boxRight, float top, float boxH, int armor) {
     float barX = boxRight + 3.f;
     float bot  = top + boxH;
-    float frac = std::max(0.f, std::min(1.f, armor / 100.f));
+    float frac = (std::max)(0.f, (std::min)(1.f, armor / 100.f));
 
     dl->AddRectFilled({barX, top}, {barX + 4.f, bot}, IM_COL32(0,0,0,180));
     if (frac > 0.f)
@@ -270,7 +270,7 @@ void ESP::Render() {
         // ── Armor bar ────────────────────────────────────────────────────────
         if (GUI::bArmorBar) {
             int armor = Rd<int>(pPawn + pawn::m_ArmorValue);
-            armor = std::max(0, std::min(100, armor));
+            armor = (std::max)(0, (std::min)(100, armor));
             DrawArmorBar(dl, boxX + boxW, sHead.y, boxH, armor);
         }
 
