@@ -7,6 +7,7 @@
 #include "../sdk/math.hpp"
 #include <Windows.h>
 #include <cmath>
+#include <algorithm>
 
 using namespace cs2_dumper::offsets;
 using namespace schemas;
@@ -106,8 +107,8 @@ namespace Aimbot {
 
         // Frame-rate-independent lerp via QPC deltaTime.
         // At 60fps (dt=1/60): alpha = 1/smooth. At 300fps (dt=1/300): alpha = 1/(smooth*5) — same feel.
-        float smooth = std::max(1.f, GUI::fAimSmooth);
-        float alpha  = std::min(1.f, deltaTime * 60.f / smooth);
+        float smooth = (std::max)(1.f, GUI::fAimSmooth);
+        float alpha  = (std::min)(1.f, deltaTime * 60.f / smooth);
 
         Vec3 newAngles;
         newAngles.x = currentAngles.x + NormAngle(bestAngle.x - currentAngles.x) * alpha;
