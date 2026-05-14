@@ -3,7 +3,7 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="cheat/cheat.vcxproj" Id="cc070b14-852d-4566-9336-40815ff8cb26" />
+  <Project Path="cheat/cheat.vcxproj" Id="04b17470-cb82-4724-904b-25445926ab86" />
   <Project Path="injector/injector.vcxproj" Id="d1e1e1e1-e1e1-e1e1-e1e1-d1e1e1e1e1e1">
     <Platform Project="x64" />
   </Project>
