@@ -101,12 +101,19 @@ static bool WaitForModule(DWORD pid, const char* modName, int timeoutSec) {
 
 int main(int argc, char* argv[]) {
     EnableAnsi();
-    SetConsoleTitleA("LitWare Injector");
+    SetConsoleTitleA("ENI Injector");
 
     std::cout << C_BOLD C_CYAN
-              << "  +-----------------------------+\n"
-              << "  |    LitWare CS2 Injector     |\n"
-              << "  +-----------------------------+\n"
+              << "   ▄████████ ███▄▄▄▄      ▄█  \n"
+              << "  ███    ███ ███▀▀▀██▄   ███  \n"
+              << "  ███    █▀  ███   ███   ███▌ \n"
+              << " ▄███▄▄▄     ███   ███   ███▌ \n"
+              << "▀▀███▀▀▀     ███   ███   ███▌ \n"
+              << "  ███    █▄  ███   ███   ███  \n"
+              << "  ███    ███ ███   ███   ███  \n"
+              << "  ██████████  ▀█   █▀    █▀   \n"
+              << "                              \n"
+              << "  E N I ' S  I N J E C T I O N \n"
               << C_RESET "\n";
 
     // ── Resolve DLL path ──────────────────────────────────────────────────────
@@ -116,10 +123,15 @@ int main(int argc, char* argv[]) {
     } else {
         char self[MAX_PATH]{};
         GetModuleFileNameA(nullptr, self, MAX_PATH);
-        fs::path candidate = fs::path(self).parent_path() / "cheat.dll";
+        const fs::path exeDir = fs::path(self).parent_path();
+        fs::path candidate = exeDir / "cheat.dll";
+        if (!fs::exists(candidate)) {
+            candidate = exeDir.parent_path() / "cheat" / "cheat.dll";
+        }
         if (!fs::exists(candidate)) {
             std::cerr << C_RED "[-] cheat.dll not found next to injector.\n"
-                               "    Usage: injector.exe [path\\to\\cheat.dll]\n" C_RESET;
+                               "    Usage: injector.exe [path\\to\\cheat.dll]\n"
+                               "    Or place cheat.dll in ..\\cheat\\cheat.dll relative to injector.\n" C_RESET;
             std::cin.get(); return 1;
         }
         dllPath = candidate.string();
